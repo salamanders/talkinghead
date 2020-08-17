@@ -1,0 +1,160 @@
+
+    /*
+    val mLeft = TachoMotor(Motor.Port.MB)
+    val mRight = TachoMotor(Motor.Port.MC)
+
+    runBlocking(Dispatchers.IO) {
+        mLeft.rotate(rotations = 3.0)
+        mRight.rotate(rotations = -3.0)
+
+        mLeft.awaitStopped()
+        mRight.awaitStopped()
+    }
+     */
+
+
+    /**
+     * Two-motor drawing mechanism
+     * Symmetric
+     * Distance between motor pivots
+     * Upper Arm length
+     * Lower arm length
+     * Both motors are equal, no "primary"
+     * Will create arcs to get to goal.  Better to subdivide the line.  Boom, calculus.
+     * Ask both motors how long to get to rotation X.  Use longest time to request both moves, so closer can go slower.
+     *
+     */
+/*
+    val (angle0, angle1) = findAngles(
+        armLength0 = 13.0,
+        armLength1 = 18.0,
+        targetX = 0.0,
+        targetY = 8.0
+    )
+
+    println(Math.toDegrees(angle0))
+    println(Math.toDegrees(angle1))
+*/
+
+
+
+
+
+/*
+
+
+fun createArm(origin: Vec2f): FabrikChain2D {
+    val chain = FabrikChain2D().apply {
+        setFixedBaseMode(true)
+        baseboneConstraintType = FabrikChain2D.BaseboneConstraintType2D.GLOBAL_ABSOLUTE
+        baseboneConstraintUV = UP
+    }
+    val base = FabrikBone2D(
+        origin,
+        Vec2f(origin.x, origin.y + 13 * LEGO)
+    ).apply {
+        clockwiseConstraintDegs = 80f
+        anticlockwiseConstraintDegs = 90f
+    }
+
+    chain.addBone(base)
+    chain.addConsecutiveConstrainedBone(UP, 24 * LEGO, 160f, 160f)
+    return chain
+}
+
+    //addChain(createArm(Vec2f(-7 * LEGO, 0f)))
+    //connectChain(createArm(Vec2f(7 * LEGO, 0f)), 0, 1, BoneConnectionPoint.END)
+
+*/
+/**
+ * Two segment arm fixed at origin
+ * @param armLength0 upper arm length
+ * @param armLength1 lower arm length
+ *
+ */
+fun findAngles(
+    origin: Point2D.Double = Point2D.Double(0.0, 0.0),
+    target: Point2D.Double,
+    armLength0: Double,
+    armLength1: Double,
+): Pair<Double, Double> {
+    val targetX = target.x - origin.x
+    val targetY = target.y - origin.y
+    val distToTarget = hypot(targetX, targetY)
+
+    val angle0a = acos(targetX / distToTarget)
+    val angle0b = acos(
+        (sq(armLength0) + sq(distToTarget) - sq(armLength1)) /
+                (2 * armLength0 * distToTarget)
+    )
+    val angle0 = angle0a + angle0b
+
+    // Doesn't impact anything, but good to know
+    val angle1 = acos(
+        (sq(armLength0) + sq(armLength1) - sq(distToTarget)) /
+                (2 * armLength0 * armLength1)
+    )
+
+    return Pair(angle0, angle1)
+}
+
+
+fun sq(x: Double) = x * x
+
+
+/*
+        fun getAll(): List<Sensor> = File("/sys/class/lego-sensor")
+            .listFiles()!!
+            .filterNotNull()
+            .map { Sensor(it) }
+            .sortedBy { it.port.name }
+            */
+
+
+                    // Random which paths map to which ports.  Explore all.
+                    //val portToLegoPortDir = portToDir(File("/sys/class/lego-port"))
+    //val motorJaw: RegulatedMotor = EV3LargeRegulatedMotor(MotorPort.C)
+
+    logger.info { "Loading audio clips..." }
+    val phrase = Phrases.expandPhrase("costume", Phrases.Triggers.COSTUME_GENERIC).toWav().map { AudioClip(it) }
+
+    // Phrases.expandPhrase("spooky ghost", Phrases.Triggers.COSTUME_GREETING)
+    // Phrases.expandPhrase("Which house has the best candy?")
+    launch(Dispatchers.IO) {
+        for (clip in phrase) {
+            clip.play()
+        }
+    }
+    // wait for phrase to start
+    while (phrase.first().state == AudioClip.State.PENDING) {
+        delay(100)
+    }
+
+    logger.info { "Starting random jaw movements (sound should be started)." }
+    while (phrase.last().state != AudioClip.State.DONE) {
+        val newJawTarget = Random.nextInt(0, 60)
+        //logger.info { "Jaw from (sp:${motorJaw.speed}, tc:${motorJaw.tachoCount} mx:${motorJaw.maxSpeed}) to ang:$newJawTarget" }
+
+        // Because of pause after move.  Hope don't have to time it...
+        // motorJaw.speed = Random.nextInt(80, 150)
+        //motorJaw.rotateTo(newJawTarget, true)
+        // Wait for move to finish OR phrase to end
+        while (
+        //motorJaw.isMoving &&
+        //!motorJaw.isStalled &&
+            phrase.last().state != AudioClip.State.DONE) {
+            delay(100)
+        }
+
+    }
+    logger.info { "Phrase finished, resetting jaw to 0." }
+    //motorJaw.rotateTo(0)
+    //motorJaw.flt()
+
+    Unit
+}
+
+/** Phrase (list) to wav file (list): []that_is.wav, very.wav, impressive.wav, makeup.wav] */
+internal fun List<String>.toWav() = this.filter { it.isNotEmpty() }.map {
+    it.toLowerCase().replace(Regex("\\W+"), "_").trim('_') + ".wav"
+}
