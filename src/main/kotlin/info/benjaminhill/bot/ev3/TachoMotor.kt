@@ -1,15 +1,15 @@
 package info.benjaminhill.bot.ev3
 
 import info.benjaminhill.bot.device.Motor
-import info.benjaminhill.utils.LogInfrequently
 import info.benjaminhill.utils.changesToFlow
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
+import mu.KotlinLogging
 import java.io.File
 import java.util.*
 import kotlin.time.ExperimentalTime
-import kotlin.time.seconds
 
+private val logger = KotlinLogging.logger {}
 
 /**
  * http://docs.ev3dev.org/projects/lego-linux-drivers/en/ev3dev-stretch/motors.html
@@ -20,8 +20,6 @@ open class TachoMotor(override val port: Port) : Motor(portToDir(port, ROOT_DIR)
 
     private val positionFile = File(deviceDir, "position")
     private val tachosPerRotation = File(deviceDir, "count_per_rot").readText().trim().toInt()
-    @ExperimentalTime
-    private val linf = LogInfrequently(delay = 0.5.seconds)
 
     @ExperimentalCoroutinesApi
     @ExperimentalTime
@@ -47,7 +45,7 @@ open class TachoMotor(override val port: Port) : Motor(portToDir(port, ROOT_DIR)
     suspend fun awaitStopped() = updates().filter { update ->
         val (status, speed, position) = update
         (!status.contains(State.RUNNING) || speed == 0).also {
-            linf.hit { "Filtering out while anything moving: '$update'=$it" }
+            logger.debug { "Filtering out while anything moving: '$update'=$it" }
         }
     }.first()
 

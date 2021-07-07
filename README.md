@@ -5,9 +5,15 @@ LEGO BrickPi3 Kotlin on ev3dev
 
 Make sure your bot is up to date:
     
+1. [Fresh buster rpi2 image](https://oss.jfrog.org/list/oss-snapshot-local/org/ev3dev/brickstrap/)
+2. All necessary config.txt changes
+3. `touch ssh`
+4. Plug into ethernet then [configure wifi](https://www.ev3dev.org/docs/tutorials/setting-up-wifi-using-the-command-line/)
+
+
     ssh robot@ev3dev  # pw: maker
-    sudo apt-get update
-    sudo apt-get dist-upgrade
+    sudo apt-get update && sudo apt-get dist-upgrade -y
+    sudo update-brickpi3-fw
     # check your python and java version
     # https://github.com/ev3dev-lang-java/installer
     sudo java -Xshare:dump

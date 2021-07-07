@@ -1,109 +1,70 @@
 package info.benjaminhill.bot
 
 
-import au.edu.federation.caliko.FabrikBone2D
-import au.edu.federation.caliko.FabrikChain2D
-import au.edu.federation.caliko.FabrikStructure2D
-import au.edu.federation.utils.Vec2f
+import com.google.cloud.firestore.DocumentChange
 import ev3dev.actuators.lego.motors.BaseRegulatedMotor
 import ev3dev.actuators.lego.motors.EV3LargeRegulatedMotor
-import ev3dev.sensors.ev3.EV3TouchSensor
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import ev3dev.actuators.lego.motors.EV3MediumRegulatedMotor
+import info.benjaminhill.bot.ev3.firestoreDb
+import info.benjaminhill.bot.ev3.toFlow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.runBlocking
 import lejos.hardware.port.MotorPort
-import lejos.hardware.port.SensorPort
+import lejos.hardware.port.Port
 import mu.KotlinLogging
 import org.slf4j.impl.SimpleLogger
-import kotlin.time.ExperimentalTime
+import org.slf4j.impl.StaticLoggerBinder
 
 
-/**
- * All distances are in Lego Studs (~8mm)
- */
 internal val logger = KotlinLogging.logger {}
 
-internal const val SHOULDER = 7f
+enum class Ports {
+    A, B, C, D,
+    S1, S2, S3, S4
+}
 
-@FlowPreview
+val Port.eName: Ports
+    get() = Ports.valueOf(this.name)
+
 @ExperimentalCoroutinesApi
-@ExperimentalTime
 fun main() {
+    System.setProperty(SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "INFO")
 
-    System.setProperty(SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "TRACE")
+// 1. Determine what logging framework SLF4J is bound to:
+    val binder: StaticLoggerBinder = StaticLoggerBinder.getSingleton()
+    println(binder.loggerFactoryClassStr)
+
     println("APP:START")
     println("Debug Enabled: ${logger.isDebugEnabled}")
 
-    val leftShoulder = EV3LargeRegulatedMotor(MotorPort.B)
-    val rightShoulder = EV3LargeRegulatedMotor(MotorPort.C)
 
-    // Calibration
-    runBlocking(Dispatchers.Default) {
-        val (leftRange, rightRange) = getRanges(leftShoulder, rightShoulder)
-        println("Left Range: $leftRange")
-        println("Right Range: $rightRange")
+    println(MotorPort.A.eName)
+    val motors: Map<Ports, BaseRegulatedMotor> = try {
+        mapOf(
+            MotorPort.A.eName to EV3MediumRegulatedMotor(MotorPort.A),
+            MotorPort.B.eName to EV3LargeRegulatedMotor(MotorPort.B),
+            MotorPort.C.eName to EV3LargeRegulatedMotor(MotorPort.C),
+            MotorPort.D.eName to EV3MediumRegulatedMotor(MotorPort.D)
+        )
+    } catch (e: NoSuchElementException) {
+        println("Not running on an EV3 brick?")
+        mapOf()
     }
 
-    val structure = FabrikStructure2D()
-
-    val armLeft = FabrikChain2D().apply {
-        setFixedBaseMode(true)
-        baseboneConstraintType = FabrikChain2D.BaseboneConstraintType2D.GLOBAL_ABSOLUTE
-        baseboneConstraintUV = UP
-        addBone(FabrikBone2D(Vec2f(-1 * SHOULDER, 0f), Vec2f(-1 * SHOULDER, 13f)).apply {
-            clockwiseConstraintDegs = 80f
-            anticlockwiseConstraintDegs = 160f
-        })
-        addConsecutiveConstrainedBone(UP, 24f, 160f, 10f)
+    runBlocking(Dispatchers.IO) {
+        firestoreDb.collection("motors").toFlow().collect { dc: DocumentChange ->
+            val docSnapshot = dc.document
+            val port = Ports.valueOf(docSnapshot.getString("name")!!)
+            val action = docSnapshot.getString("action") ?: error("Missing 'action'")
+            val motor = motors[port] ?: error("Unable to find motor:$port")
+            val newValue = docSnapshot.get("value")
+            motorAction(motor, action, newValue)
+        }
     }
-
-    val armRight = FabrikChain2D().apply {
-        setFixedBaseMode(true)
-        baseboneConstraintType = FabrikChain2D.BaseboneConstraintType2D.GLOBAL_ABSOLUTE
-        baseboneConstraintUV = UP
-        addBone(FabrikBone2D(Vec2f(SHOULDER, 0f), Vec2f(SHOULDER, 13f)).apply {
-            clockwiseConstraintDegs = 160f
-            anticlockwiseConstraintDegs = 80f
-        })
-        addConsecutiveConstrainedBone(UP, 24f, 10f, 160f)
-    }
-
-    structure.addChain(armLeft)
-    structure.addChain(armRight)
-
-    val target = Vec2f(-1 * SHOULDER - 13f, 24f)
-    structure.solveForTarget(target)
-    structure.debugSVG(target = target)
 }
 
-@FlowPreview
-fun button(): Flow<Boolean> = flow {
-    val sensor = EV3TouchSensor(SensorPort.S2)
-    while (true) {
-        emit(sensor.isPressed)
-        delay(100)
-    }
-}.debounce(200)
-    .conflate()
-    .distinctUntilChanged()
+fun motorAction(motor: BaseRegulatedMotor, action: String, newValue: Any?) {
 
-suspend fun Flow<Boolean>.waitForPress() {
-    filter { it }.first()
 }
-
-@FlowPreview
-suspend fun getRanges(
-    leftShoulder: BaseRegulatedMotor,
-    rightShoulder: BaseRegulatedMotor
-): Pair<ClosedFloatingPointRange<Float>, ClosedFloatingPointRange<Float>> {
-    println("SPIN LEFT!  Move left-shoulder to 45° down-left, right-shoulder to 45° up-left, then click.")
-    button().waitForPress()
-    val leftMin = leftShoulder.position
-    val rightMin = rightShoulder.position
-    println("SPIN RIGHT! Move left-shoulder to 45° up-right, right-shoulder to 45° down-right, then click.")
-    button().waitForPress()
-    val leftMax = leftShoulder.position
-    val rightMax = rightShoulder.position
-
-    return Pair(leftMin..leftMax, rightMin..rightMax)
-}
-

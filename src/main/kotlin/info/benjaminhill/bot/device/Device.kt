@@ -10,12 +10,12 @@ abstract class Device(
     }
 
     val portNum = deviceDir.parent.last().toInt() // TODO: This may not equal the other port number
-    abstract val port:Enum<*>
+    abstract val port: Enum<*>
 
     companion object {
         const val ADDRESS_FILE = "address"
 
-        inline fun <reified T : Enum<T>> portToDir(port: T, rootDir:File) = rootDir
+        inline fun <reified T : Enum<T>> portToDir(port: T, rootDir: File) = rootDir
             .listFiles()!!
             .filterNotNull()
             .first { dirPortN ->
@@ -23,7 +23,7 @@ abstract class Device(
                 enumValueOf<T>(portName) == port
             }
 
-        inline fun <reified  T: Enum<T>> dirToPort(deviceDir:File):T = File(deviceDir, ADDRESS_FILE)
+        inline fun <reified T : Enum<T>> dirToPort(deviceDir: File): T = File(deviceDir, ADDRESS_FILE)
             .readText().trim().split(":").last()
             .let { enumValueOf(it) }
     }

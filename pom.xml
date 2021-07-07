@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -14,17 +14,17 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <kotlin.version>1.4.0-rc</kotlin.version>
-        <kotlin.coroutine.version>1.3.8-1.4.0-rc</kotlin.coroutine.version>
+        <kotlin.version>1.5.20</kotlin.version>
+        <kotlin.coroutine.version>1.5.0-native-mt</kotlin.coroutine.version>
 
         <kotlin.code.style>official</kotlin.code.style>
 
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
-        <kotlin.compiler.languageVersion>1.4</kotlin.compiler.languageVersion>
+        <kotlin.compiler.languageVersion>1.5</kotlin.compiler.languageVersion>
 
-        <junit.version>5.7.0-M1</junit.version>
+        <junit.version>5.8.0-M1</junit.version>
 
         <brick.host>ev3dev</brick.host>
         <brick.home>/home/robot</brick.home>
@@ -45,21 +45,6 @@
     </distributionManagement>
 
     <repositories>
-
-        <repository>
-            <id>bintray.kotlin.eap</id>
-            <name>Bintray Kotlin EAP Repository</name>
-            <url>https://dl.bintray.com/kotlin/kotlin-eap</url>
-        </repository>
-        <repository>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <id>bintray-kotlin-kotlinx</id>
-            <name>bintray</name>
-            <url>https://kotlin.bintray.com/kotlinx</url>
-        </repository>
-
         <!-- Needed for lejos.hardware.port -->
         <repository>
             <id>jitpack.io</id>
@@ -68,32 +53,6 @@
     </repositories>
 
     <pluginRepositories>
-        <pluginRepository>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <id>bintray.kotlin.eap</id>
-            <name>Bintray Kotlin EAP Repository</name>
-            <url>https://dl.bintray.com/kotlin/kotlin-eap</url>
-        </pluginRepository>
-
-        <pluginRepository>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <id>bintray-kotlin-kotlinx</id>
-            <name>bintray-plugins</name>
-            <url>https://kotlin.bintray.com/kotlinx</url>
-        </pluginRepository>
-
-        <pluginRepository>
-            <id>bintray.kotlin.dev</id>
-            <name>Bintray Kotlin DEV Repository</name>
-            <url>https://dl.bintray.com/kotlin/kotlin-dev</url>
-        </pluginRepository>
 
     </pluginRepositories>
 
@@ -116,24 +75,6 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Logging -->
-        <dependency>
-            <groupId>io.github.microutils</groupId>
-            <artifactId>kotlin-logging</artifactId>
-            <version>1.8.3</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.30</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>1.7.30</version>
-        </dependency>
-
-
         <dependency>
             <groupId>com.github.ev3dev-lang-java</groupId>
             <artifactId>ev3dev-lang-java</artifactId>
@@ -152,16 +93,11 @@
             <scope>compile</scope>
         </dependency>
 
+        <!-- includes utils -->
         <dependency>
             <groupId>com.github.salamanders</groupId>
             <artifactId>ezstats</artifactId>
-            <version>69a932da4f</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.github.salamanders</groupId>
-            <artifactId>utils</artifactId>
-            <version>c991bfd4af</version>
+            <version>d5f1274f28</version>
         </dependency>
 
         <dependency>
@@ -175,6 +111,21 @@
             <artifactId>maven-antrun-plugin</artifactId>
             <version>3.0.0</version>
             <type>maven-plugin</type>
+        </dependency>
+
+
+        <!-- https://mvnrepository.com/artifact/com.google.cloud/google-cloud-firestore -->
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-firestore</artifactId>
+            <version>2.6.1</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/net.sf.sociaal/freetts -->
+        <dependency>
+            <groupId>net.sf.sociaal</groupId>
+            <artifactId>freetts</artifactId>
+            <version>1.2.2</version>
         </dependency>
 
     </dependencies>

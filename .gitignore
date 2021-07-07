@@ -213,3 +213,4 @@ $RECYCLE.BIN/
 /.idea/
 /debug.svg
 /brickpi3.iml
+/src/main/resources/*.json

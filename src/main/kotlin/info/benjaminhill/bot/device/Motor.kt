@@ -59,7 +59,7 @@ abstract class Motor(dir: File) : Device(dir) {
             fun of(state: String): EnumSet<State> {
                 try {
                     return EnumSet.copyOf(state.split(" ")
-                        .map { valueOf(it.toUpperCase()) })
+                        .map { valueOf(it.uppercase(Locale.getDefault())) })
                 } catch (e: IllegalArgumentException) {
                     println("Failed to parse: '$state'")
                     throw(e)
