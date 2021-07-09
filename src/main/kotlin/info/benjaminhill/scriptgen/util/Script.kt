@@ -1,15 +1,66 @@
-package info.benjaminhill.scriptgen
+package info.benjaminhill.scriptgen.util
 
 import mu.KotlinLogging
 import org.apache.commons.math3.geometry.euclidean.twod.Line
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D
 import org.w3c.dom.Element
+import java.awt.BasicStroke
+import java.awt.Color
+import java.awt.RenderingHints
+import java.awt.image.BufferedImage
 import java.io.File
 import java.util.*
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 private val LOG = KotlinLogging.logger {}
+
+typealias Script = List<NormalVector2D>
+typealias MutableScript = MutableList<NormalVector2D>
+
+fun mutableScriptOf() = mutableListOf<NormalVector2D>()
+
+/** Render a script into a sample image, good for testing */
+fun Script.toImage(): BufferedImage {
+    val outputImageRes = 2_000
+
+    /** A sample rendering */
+    val outputImage = BufferedImage(outputImageRes, outputImageRes, BufferedImage.TYPE_INT_RGB)
+    val outputG2d = outputImage.createGraphics()!!.apply {
+        color = Color.WHITE
+        fillRect(0, 0, outputImage.width, outputImage.height)
+        setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+        color = Color.BLACK
+        // a few mm wide pen?
+        stroke = BasicStroke((1f / 1000) * outputImageRes)
+    }
+
+    // Needs a better way to tell if a point matters or not.
+    // distinctBy {(it.x / plotterResolution).roundToInt() to (it.y / plotterResolution).roundToInt() }
+    this.map {
+        Vector2D(it.x, it.y).scalarMultiply(outputImageRes.toDouble())
+    }.zipWithNext().forEach { (a, b) ->
+        check(a.x.roundToInt() in 0..outputImageRes)
+        check(a.y.roundToInt() in 0..outputImageRes)
+        outputG2d.drawLine(a.x.roundToInt(), a.y.roundToInt(), b.x.roundToInt(), b.y.roundToInt())
+    }
+
+    outputG2d.dispose()
+    return outputImage
+}
+
+/** Render a script into a plain text chunk, good for exporting */
+fun Script.toText() = this.joinToString(",\n") { it.toString() }
+
+fun Script.removeDuplicates(): Script = this.filterIndexed { index, vector2D ->
+    if (index == 0) {
+        true
+    } else {
+        vector2D != this[index - 1]
+    }
+}
+
 
 /** Hacky parse of a SVG, like what StippleGen2 produces */
 fun fileToPath(svgXmlFile: File): List<Vector2D> {
@@ -23,14 +74,6 @@ fun fileToPath(svgXmlFile: File): List<Vector2D> {
         points.add(Vector2D(pen.nextDouble(), pen.nextDouble()))
     }
     return points
-}
-
-fun removeDuplicates(points: List<Vector2D>) = points.filterIndexed { index, vector2D ->
-    if (index == 0) {
-        true
-    } else {
-        vector2D != points[index - 1]
-    }
 }
 
 

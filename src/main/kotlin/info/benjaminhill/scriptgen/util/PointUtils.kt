@@ -26,18 +26,12 @@ fun BufferedImage.getLum(x: Int, y: Int): Float {
     return (red * 0.2126f + green * 0.7152f + blue * 0.0722f) / 255
 }
 
-/** Shorter round for the logs */
-val Double.str: String
-    get() = "%.4f".format(this)
-
-
 /**
  * Bresenham's algorithm to find all pixels on a Line2D.
  * @author nes
  * from https://snippets.siftie.com/nikoschwarz/iterate-all-points-on-a-line-using-bresenhams-algorithm/
  */
-
-fun Line2D.points(): List<Point2D> {
+fun Line2D.pixelsOnLine(): List<Point2D> {
     val precision = 1.0
     val sx: Double = if (x1 < x2) precision else -1 * precision
     val sy: Double = if (y1 < y2) precision else -1 * precision

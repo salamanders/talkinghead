@@ -1,5 +1,7 @@
-package info.benjaminhill.scriptgen
+package info.benjaminhill.scriptgen.TODO
 
+import info.benjaminhill.scriptgen.getLum
+import info.benjaminhill.scriptgen.pixelsOnLine
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
@@ -41,7 +43,7 @@ class ImageToStrokes(
 
                 if (inputDim.contains(p0) && pOrigin.distance(p0) > 2) {
 
-                    val avgInk0 = Line2D.Double(pOrigin, p0).points().map { point ->
+                    val avgInk0 = Line2D.Double(pOrigin, p0).pixelsOnLine().map { point ->
                         1 - inputBi.getLum(point.x.toInt(), point.y.toInt())
                     }.map { it * it }.average()
 
@@ -71,7 +73,7 @@ class ImageToStrokes(
 }
 
 fun main() = ImageToStrokes(
-    "liberty.png",
+    "images/liberty.png",
     2_000,
     20_000,
     0.1

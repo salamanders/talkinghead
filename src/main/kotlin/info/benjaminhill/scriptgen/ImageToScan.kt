@@ -1,7 +1,11 @@
 package info.benjaminhill.scriptgen
 
+import info.benjaminhill.scriptgen.util.NormalVector2D
+import info.benjaminhill.scriptgen.util.Script
+import info.benjaminhill.scriptgen.util.mutableScriptOf
 import kotlin.math.min
 
+/* Not currently working.  Odd... */
 class TreeNode<T>(val value: T, private val parent: TreeNode<T>? = null, private val isClose: (T, T) -> Boolean) {
     private val children = mutableListOf<TreeNode<T>>()
 
@@ -43,12 +47,12 @@ class TreeNode<T>(val value: T, private val parent: TreeNode<T>? = null, private
 /**
  * Left-to-right pass
  */
-class ImageToScan(fileName: String) : AbstractImageToScaleFree(fileName) {
+class ImageToScan(fileName: String) : AbstractDrawing(fileName) {
 
     private val xStep = 5.0 / 1000
     private val yStep = 3.0 / 1000
 
-    private fun hasInk(p: NormalVector2D): Boolean = getInk(p) > 0.0001
+    private fun hasInk(p: NormalVector2D): Boolean = sfi.getInk(p) > 0.0001
 
     /** Get from start to finish along an edge, if possible.  Empty if no path found */
     private fun findEdgePath(start: NormalVector2D, finish: NormalVector2D): List<NormalVector2D> {
@@ -84,7 +88,8 @@ class ImageToScan(fileName: String) : AbstractImageToScaleFree(fileName) {
         return listOf()
     }
 
-    fun run() {
+    override fun generateScript(): Script {
+        val result = mutableScriptOf()
         var x = xStep
         var y = yStep
         var dir = 1
@@ -107,30 +112,29 @@ class ImageToScan(fileName: String) : AbstractImageToScaleFree(fileName) {
             val isInky = hasInk(loc)
 
             val inkLevel = listOf(
-                getInk(NormalVector2D(loc.x, loc.y + yStep * dir * .5)),
-                getInk(NormalVector2D(loc.x + xStep / 3, loc.y + yStep * dir * .5)),
-                getInk(NormalVector2D(loc.x - xStep / 3, loc.y + yStep * dir * .5))
+                sfi.getInk(NormalVector2D(loc.x, loc.y + yStep * dir * .5)),
+                sfi.getInk(NormalVector2D(loc.x + xStep / 3, loc.y + yStep * dir * .5)),
+                sfi.getInk(NormalVector2D(loc.x - xStep / 3, loc.y + yStep * dir * .5))
             ).average().toFloat()
 
             if (isInky) {
-                if (!lastIsInky && script.isNotEmpty()) {
+                if (!lastIsInky && result.isNotEmpty()) {
                     // Just transitioned to inside.  Need to find a "safe" path from last to here
-                    script.addAll(findEdgePath(script.last(), loc))
+                    result.addAll(findEdgePath(result.last(), loc))
                 }
-                script.add(loc)
+                result.add(loc)
 
                 if (inkLevel > 0.1) {
                     val squiggleSize = (xStep * inkLevel) * .4
-                    script.add(loc.addN(NormalVector2D(squiggleSize, 0.0)))
-                    script.add(loc.addN(NormalVector2D(squiggleSize, yStep * dir)))
-                    script.add(loc.addN(NormalVector2D(-squiggleSize, yStep * dir)))
-                    script.add(loc.addN(NormalVector2D(-squiggleSize, yStep * dir * 2)))
-                    script.add(loc.addN(NormalVector2D(0.0, yStep * dir * 2)))
+                    result.add(loc.addN(NormalVector2D(squiggleSize, 0.0)))
+                    result.add(loc.addN(NormalVector2D(squiggleSize, yStep * dir)))
+                    result.add(loc.addN(NormalVector2D(-squiggleSize, yStep * dir)))
+                    result.add(loc.addN(NormalVector2D(-squiggleSize, yStep * dir * 2)))
+                    result.add(loc.addN(NormalVector2D(0.0, yStep * dir * 2)))
                 }
             }
             lastIsInky = isInky
         }
+        return result
     }
 }
-
-fun main() = ImageToScan("liberty.png").use { it.run() }

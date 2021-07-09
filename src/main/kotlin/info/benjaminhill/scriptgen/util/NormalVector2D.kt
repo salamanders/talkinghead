@@ -1,5 +1,7 @@
-package info.benjaminhill.scriptgen
+package info.benjaminhill.scriptgen.util
 
+import info.benjaminhill.utils.r
+import info.benjaminhill.utils.round
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D
 import kotlin.math.min
 
@@ -10,7 +12,7 @@ class NormalVector2D(x: Double, y: Double) : Vector2D(x, y) {
         checkNormal(this)
     }
 
-    override fun toString(): String = "{\"x\":${x.str}, \"y\":${y.str}}"
+    override fun toString(): String = "{\"x\":${x.round(4)}, \"y\":${y.round(4)}}"
 
     // When the result should also be within normal range
     fun addN(v: NormalVector2D): NormalVector2D = toNormal(super.add(v))
@@ -39,10 +41,10 @@ class NormalVector2D(x: Double, y: Double) : Vector2D(x, y) {
 
         /** A bit more wiggle room because diagonals can extend longer, but shouldn't go shorter */
         fun checkDiagonalsNormal(hypotenuseLeft: Double, hypotenuseRight: Double) {
-            check(hypotenuseLeft >= -0.05) { "normalized string unexpected hypotenuseLeft:${hypotenuseLeft.str}" }
-            check(hypotenuseLeft < 1.5) { "normalized string unexpected hypotenuseLeft:${hypotenuseLeft.str}" }
-            check(hypotenuseRight >= -0.05) { "normalized string unexpected hypotenuseRight:${hypotenuseLeft.str}" }
-            check(hypotenuseRight < 1.5) { "normalized string unexpected hypotenuseRight:${hypotenuseRight.str}" }
+            check(hypotenuseLeft >= -0.05) { "normalized string unexpected hypotenuseLeft:${hypotenuseLeft.r}" }
+            check(hypotenuseLeft < 1.5) { "normalized string unexpected hypotenuseLeft:${hypotenuseLeft.r}" }
+            check(hypotenuseRight >= -0.05) { "normalized string unexpected hypotenuseRight:${hypotenuseLeft.r}" }
+            check(hypotenuseRight < 1.5) { "normalized string unexpected hypotenuseRight:${hypotenuseRight.r}" }
         }
 
         fun toNormal(p: Vector2D) = NormalVector2D(p.x, p.y)

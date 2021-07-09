@@ -1,5 +1,9 @@
-package info.benjaminhill.scriptgen
+package info.benjaminhill.scriptgen.TODO
 
+import info.benjaminhill.scriptgen.angleToVector2D
+import info.benjaminhill.scriptgen.contains
+import info.benjaminhill.scriptgen.getLum
+import info.benjaminhill.scriptgen.util.ramerDouglasPeucker
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D
 import java.awt.BasicStroke
 import java.awt.Color
@@ -93,9 +97,7 @@ class ImageToTrace(fileName: String) : AbstractImageToX(fileName) {
         }
         LOG.info { "Found ${tmp.size} (cyan) reduced to ${script.size} (black)" }
         outputG2d.dispose()
-        ImageIO.write(outputImage, "png", File("scriptgen/out/overlay_${this.javaClass.simpleName}.png"))
+        ImageIO.write(outputImage, "png", File("scriptgen/overlay_${this.javaClass.simpleName}.png"))
     }
 }
-
-fun main() = ImageToTrace("liberty.png").use { it.run() }
 

@@ -1,13 +1,20 @@
 package info.benjaminhill.scriptgen
 
+import info.benjaminhill.scriptgen.util.NormalVector2D
+import info.benjaminhill.scriptgen.util.Script
+import info.benjaminhill.scriptgen.util.mutableScriptOf
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D
 import kotlin.math.cos
 import kotlin.math.sin
 
+/**
+ * Spiral line, squiggle the line in dark areas
+ */
+class ImageToSpiral(fileName: String, private val numberOfSpins: Int) : AbstractDrawing(fileName) {
 
-class ImageToSpiral(fileName: String, private val numberOfSpins: Int) : AbstractImageToScaleFree(fileName) {
+    override fun generateScript(): Script {
+        val result = mutableScriptOf()
 
-    fun run() {
         val res = 500 // for compression removing identical spiral points
         val center = NormalVector2D(.5, .5)
 
@@ -25,17 +32,18 @@ class ImageToSpiral(fileName: String, private val numberOfSpins: Int) : Abstract
         // Do the spiral, jog to center when you find darkness
         spiralPoints.forEach { a ->
             // "Real" would be to average pixel lum in the little pie slice.  Meh.
-            script.add(a)
-            val ink = getInk(a)
+            result.add(a)
+            val ink = sfi.getInk(a)
             if (ink > .01) {
                 val squiggleSize = spaceBetweenSpins * ink * 1.5
                 val squiggle = a.subtract(NormalVector2D(.5, .5)).normalize().scalarMultiply(squiggleSize).add(a)
                 if (NormalVector2D.isNormal(squiggle)) {
-                    script.add(NormalVector2D.toNormal(squiggle))
+                    result.add(NormalVector2D.toNormal(squiggle))
                 }
             }
 
         }
+        return result
     }
 
     companion object {
@@ -53,5 +61,3 @@ class ImageToSpiral(fileName: String, private val numberOfSpins: Int) : Abstract
         }
     }
 }
-
-fun main() = ImageToSpiral("liberty.png", 100).use { it.run() }

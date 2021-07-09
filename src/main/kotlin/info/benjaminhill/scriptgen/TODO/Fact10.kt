@@ -1,4 +1,4 @@
-package info.benjaminhill.scriptgen
+package info.benjaminhill.scriptgen.TODO
 
 import java.awt.BasicStroke
 import java.awt.Color
@@ -11,7 +11,6 @@ import kotlin.math.abs
 import kotlin.math.cos
 
 class Fact10 : Runnable, AutoCloseable {
-
 
     private val outputImage = BufferedImage(RES, RES, BufferedImage.TYPE_INT_RGB)
     private val outputG2d = outputImage.createGraphics()!!.apply {
@@ -26,7 +25,7 @@ class Fact10 : Runnable, AutoCloseable {
     override fun close() {
         outputG2d.dispose()
         val name = this.javaClass.simpleName
-        ImageIO.write(outputImage, "png", File("scriptgen/out/decimated_$name.png"))
+        ImageIO.write(outputImage, "png", File("scriptgen/decimated_$name.png"))
     }
 
     override fun run() {
