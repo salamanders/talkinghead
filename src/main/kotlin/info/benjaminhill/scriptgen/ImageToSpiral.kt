@@ -1,8 +1,10 @@
 package info.benjaminhill.scriptgen
 
 import info.benjaminhill.scriptgen.util.NormalVector2D
+import info.benjaminhill.scriptgen.util.NormalVector2D.Companion.normalOrNull
 import info.benjaminhill.scriptgen.util.Script
 import info.benjaminhill.scriptgen.util.mutableScriptOf
+import mu.KotlinLogging
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D
 import kotlin.math.cos
 import kotlin.math.sin
@@ -20,10 +22,8 @@ class ImageToSpiral(fileName: String, private val numberOfSpins: Int) : Abstract
 
         val spiralPoints = unitSpiral(numberOfSpins).map {
             it.add(center)
-        }.filter {
-            NormalVector2D.isNormal(it)
-        }.map {
-            NormalVector2D.toNormal(it)
+        }.mapNotNull {
+            it.normalOrNull()
         }.distinctBy { (it.x * res).toInt() to (it.y * res).toInt() }
 
         val spaceBetweenSpins = center.norm / numberOfSpins
@@ -37,8 +37,8 @@ class ImageToSpiral(fileName: String, private val numberOfSpins: Int) : Abstract
             if (ink > .01) {
                 val squiggleSize = spaceBetweenSpins * ink * 1.5
                 val squiggle = a.subtract(NormalVector2D(.5, .5)).normalize().scalarMultiply(squiggleSize).add(a)
-                if (NormalVector2D.isNormal(squiggle)) {
-                    result.add(NormalVector2D.toNormal(squiggle))
+                squiggle.normalOrNull()?.let {
+                    result.add(it)
                 }
             }
 
@@ -59,5 +59,9 @@ class ImageToSpiral(fileName: String, private val numberOfSpins: Int) : Abstract
                 Vector2D(cos(rad), sin(rad)).scalarMultiply(radius)
             }
         }
+
+
+        val LOG = KotlinLogging.logger {}
+
     }
 }

@@ -19,7 +19,7 @@ private val LOG = KotlinLogging.logger {}
 typealias Script = List<NormalVector2D>
 typealias MutableScript = MutableList<NormalVector2D>
 
-fun mutableScriptOf() = mutableListOf<NormalVector2D>()
+fun mutableScriptOf(vararg points: NormalVector2D) = mutableListOf(*points)
 
 /** Render a script into a sample image, good for testing */
 fun Script.toImage(): BufferedImage {

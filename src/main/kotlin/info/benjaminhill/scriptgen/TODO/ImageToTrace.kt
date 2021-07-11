@@ -1,8 +1,8 @@
 package info.benjaminhill.scriptgen.TODO
 
-import info.benjaminhill.scriptgen.angleToVector2D
-import info.benjaminhill.scriptgen.contains
-import info.benjaminhill.scriptgen.getLum
+import info.benjaminhill.scriptgen.util.angleToVector2D
+import info.benjaminhill.scriptgen.util.contains
+import info.benjaminhill.scriptgen.util.getLum
 import info.benjaminhill.scriptgen.util.ramerDouglasPeucker
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D
 import java.awt.BasicStroke

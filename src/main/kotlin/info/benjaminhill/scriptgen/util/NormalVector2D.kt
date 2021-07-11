@@ -9,35 +9,44 @@ import kotlin.math.min
 class NormalVector2D(x: Double, y: Double) : Vector2D(x, y) {
 
     init {
-        checkNormal(this)
+        require(isNormal(this)) { "non normal point: ${this.x} x ${this.y}" }
     }
 
     override fun toString(): String = "{\"x\":${x.round(4)}, \"y\":${y.round(4)}}"
 
     // When the result should also be within normal range
-    fun addN(v: NormalVector2D): NormalVector2D = toNormal(super.add(v))
+    fun addN(v: NormalVector2D): NormalVector2D = super.add(v).asNormalVector2D()
 
     // When the result should also be within normal range
-    fun subtractN(v: NormalVector2D): NormalVector2D = toNormal(super.subtract(v))
+    fun subtractN(v: NormalVector2D): NormalVector2D = super.subtract(v).asNormalVector2D()
 
     // When the result should also be within normal range
-    fun scalarMultiplyN(a: Double): NormalVector2D = toNormal(super.scalarMultiply(a))
+    fun scalarMultiplyN(a: Double): NormalVector2D = super.scalarMultiply(a).asNormalVector2D()
 
-    fun normalizeN() = toNormal(normalize())
+    fun normalizeN() = normalize().asNormalVector2D()
 
-    /** Don't know how many points to get.  How about 20 */
-    fun getPointsAlongLine(other: NormalVector2D): List<NormalVector2D> {
+    /** Get 0 to numPoints along a line using even steps */
+    fun getNPointsAlongLine(other: NormalVector2D, numPoints: Int = 20): List<NormalVector2D> {
         val diff = other.subtract(this).normalize()
         val distance = this.distance(other)
-        return (0..20).map {
-            it / 20.0
-        }.map { pct ->
-            toNormal(add(pct * distance, diff))
+        return (0..numPoints).map {
+            add((it.toDouble() / numPoints) * distance, diff).asNormalVector2D()
         }
     }
 
 
     companion object {
+
+        fun coerceNormalVector2D(x: Double, y: Double): NormalVector2D =
+            NormalVector2D(x.coerceIn(0.0, 0.999999999), y.coerceIn(0.0, 0.999999999))
+
+        fun Vector2D.normalOrNull(): NormalVector2D? = normalOrNull(this.x, this.y)
+
+        fun normalOrNull(x: Double, y: Double): NormalVector2D? = try {
+            NormalVector2D(x, y)
+        } catch (e: IllegalArgumentException) {
+            null
+        }
 
         /** A bit more wiggle room because diagonals can extend longer, but shouldn't go shorter */
         fun checkDiagonalsNormal(hypotenuseLeft: Double, hypotenuseRight: Double) {
@@ -47,7 +56,21 @@ class NormalVector2D(x: Double, y: Double) : Vector2D(x, y) {
             check(hypotenuseRight < 1.5) { "normalized string unexpected hypotenuseRight:${hypotenuseRight.r}" }
         }
 
-        fun toNormal(p: Vector2D) = NormalVector2D(p.x, p.y)
+        /** Also checks to make sure within bounds */
+        fun Vector2D.asNormalVector2D(): NormalVector2D {
+            // accept border cases by cheating
+            val x = if (this.x == 1.0) {
+                0.999999999
+            } else {
+                this.x
+            }
+            val y = if (this.y == 1.0) {
+                0.999999999
+            } else {
+                this.y
+            }
+            return NormalVector2D(x, y)
+        }
 
         /** Scale proportionally to fit inside a unit sq, trimming to shape */
         fun normalizePoints(points: List<Vector2D>): List<NormalVector2D> {
@@ -59,7 +82,7 @@ class NormalVector2D(x: Double, y: Double) : Vector2D(x, y) {
             val scaleFactor = min(xScale, yScale)
 
             val scaled = points.map {
-                toNormal(it.subtract(globalMin).scalarMultiply(scaleFactor))
+                it.subtract(globalMin).scalarMultiply(scaleFactor).asNormalVector2D()
             }
 
             val scaledMax = NormalVector2D(scaled.maxByOrNull { it.x }!!.x, scaled.maxByOrNull { it.y }!!.y)
@@ -70,21 +93,14 @@ class NormalVector2D(x: Double, y: Double) : Vector2D(x, y) {
             }
         }
 
-        private fun checkNormal(p: Vector2D) {
-            require(p.x.isFinite() && p.y.isFinite()) { "Bad NormalVector2D($p.x, $p.y)" }
-            require(
-                p.x > -0.1 &&
-                        p.x < 1.1 &&
-                        p.y > -0.1 &&
-                        p.y < 1.1
-            ) { "non normal point: ${p.x} x ${p.y}" }
-        }
+        private fun isNormal(p: Vector2D) = isNormal(p.x, p.y)
 
-        fun isNormal(p: Vector2D) = p.x.isFinite() &&
-                p.y.isFinite() &&
-                p.x >= 0 &&
-                p.x < 1 &&
-                p.y >= 0 &&
-                p.y < 1
+        private fun isNormal(x: Double, y: Double) =
+            x.isFinite() &&
+                    y.isFinite() &&
+                    x >= 0 &&
+                    x < 1 &&
+                    y >= 0 &&
+                    y < 1
     }
 }

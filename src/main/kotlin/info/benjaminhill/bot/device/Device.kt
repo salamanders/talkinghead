@@ -9,7 +9,7 @@ abstract class Device(
         require(deviceDir.exists()) { "Unable to read device directory '${deviceDir.absolutePath}'" }
     }
 
-    val portNum = deviceDir.parent.last().toInt() // TODO: This may not equal the other port number
+    val portNum = deviceDir.parent.last().code // TODO: This may not equal the other port number
     abstract val port: Enum<*>
 
     companion object {

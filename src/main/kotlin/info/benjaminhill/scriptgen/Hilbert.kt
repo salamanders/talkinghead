@@ -1,9 +1,8 @@
 package info.benjaminhill.scriptgen
 
-import info.benjaminhill.scriptgen.util.NormalVector2D
-import info.benjaminhill.scriptgen.util.Script
-import info.benjaminhill.scriptgen.util.mutableScriptOf
-import info.benjaminhill.scriptgen.util.removeDuplicates
+import info.benjaminhill.scriptgen.util.*
+import info.benjaminhill.scriptgen.util.NormalVector2D.Companion.normalOrNull
+import mu.KotlinLogging
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D
 import kotlin.math.cos
 import kotlin.math.sin
@@ -50,14 +49,14 @@ class Hilbert(fileName: String, private val maxDepth: Int) : AbstractDrawing(fil
     }
 
     private fun drawX(loc: NormalVector2D): MutableList<NormalVector2D> {
-        val result = mutableListOf<NormalVector2D>()
+        val result: MutableScript = mutableScriptOf()
         val ink = sfi.getInk(loc)
         val xLegSize = sqrt(hopSize * hopSize + hopSize * hopSize)
         listOf(-1, 1).forEach { x ->
             listOf(-1, 1).forEach { y ->
                 val squiggled = loc.add(Vector2D(x * ink * xLegSize, y * ink * xLegSize))
-                if (NormalVector2D.isNormal(squiggled)) {
-                    result.add(NormalVector2D.toNormal(squiggled))
+                squiggled.normalOrNull()?.let {
+                    result.add(it)
                 }
             }
         }
@@ -103,5 +102,9 @@ class Hilbert(fileName: String, private val maxDepth: Int) : AbstractDrawing(fil
         location = location.add(Vector2D(cos(rad), sin(rad)))
         //LOG.info { "$location -> $nextLocation" }
         locationHistory.add(location)
+    }
+
+    companion object {
+        val LOG = KotlinLogging.logger {}
     }
 }
