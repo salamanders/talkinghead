@@ -103,7 +103,7 @@
         <dependency>
             <groupId>com.github.salamanders</groupId>
             <artifactId>utils</artifactId>
-            <version>98be07f8fb</version>
+            <version>d2e6253dd7</version>
         </dependency>
 
         <dependency>

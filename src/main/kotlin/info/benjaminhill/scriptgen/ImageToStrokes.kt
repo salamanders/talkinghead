@@ -4,6 +4,12 @@ import info.benjaminhill.scriptgen.util.NormalVector2D
 import info.benjaminhill.scriptgen.util.NormalVector2D.Companion.normalOrNull
 import info.benjaminhill.scriptgen.util.Script
 import info.benjaminhill.scriptgen.util.mutableScriptOf
+import info.benjaminhill.utils.mapConcurrently
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D
 import java.util.concurrent.ThreadLocalRandom
@@ -23,18 +29,19 @@ class ImageToStrokes(
     private val minPctHop: Double = 0.0001,
 ) : AbstractDrawing(fileName) {
 
-    override fun generateScript(): Script {
+    override fun generateScript(): Script = runBlocking(Dispatchers.Default) {
         // Seed at center
         val resultScript = mutableScriptOf(NormalVector2D(.5, .5))
-
         for (i in 0..strokes) {
-            if (i % 100 == 0) {
+            if (i % 250 == 0) {
                 LOG.info { "$i of $strokes" }
             }
             val currentLocation = resultScript.last()
-            val allPossibleNext: List<Pair<NormalVector2D, Double>> = (0..searchSteps).mapNotNull {
-                getRandomLocation(currentLocation)
-            }
+            val allPossibleNext: List<Pair<NormalVector2D, Double>> = (0..searchSteps).toList()
+                .asFlow().mapConcurrently {
+                    getRandomLocation(currentLocation)
+                }.filterNotNull().toList()
+
             if (allPossibleNext.size.toDouble() / searchSteps < .1) {
                 LOG.warn { "Excluded too many possible next steps: ${allPossibleNext.size}" }
             }
@@ -46,8 +53,9 @@ class ImageToStrokes(
             sfi.whiteout(currentLocation, bestPt)
             resultScript.add(bestPt)
         }
-        return resultScript
+        return@runBlocking resultScript
     }
+
 
     private fun getRandomLocation(origin: NormalVector2D): Pair<NormalVector2D, Double>? {
         // Gaussian random hops.  This would be a good swarm-optimizer!
@@ -65,7 +73,7 @@ class ImageToStrokes(
             //LOG.info { "Too small a hop, not great. (${origin.distance(potentialNextPoint)})" }
             return null
         }
-        val avgInk = sfi.avgInk(origin, potentialNextPoint)
+        val avgInk = sfi.getInkAvgSqs(origin, potentialNextPoint)
         return Pair(potentialNextPoint, avgInk)
     }
 

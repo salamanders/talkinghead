@@ -25,28 +25,31 @@ private constructor(
     /** Scale up by the image dimension then sample from the backing array */
     fun getInk(point: NormalVector2D): Float = inputImageInk[pointToIndex(point)]
 
-    private fun setInk(point: NormalVector2D, ink: Float = 0f) {
-        inputImageInk[pointToIndex(point)] = ink
-    }
-
-    fun whiteout(p1: NormalVector2D, p2: NormalVector2D) {
-        pixelsOnLine(p1, p2).forEach { (point, _) ->
-            setInk(point, 0f)
+    fun whiteout(p1: NormalVector2D, p2: NormalVector2D) =applyToPixelsOnLine(p1, p2) { inkIndex->
+            inputImageInk[inkIndex] = 0f
         }
-    }
 
-    fun avgInk(p1: NormalVector2D, p2: NormalVector2D) = pixelsOnLine(p1, p2)
-        .map { (_, lum) ->
-            lum * lum
-        }.average()
+    fun getInkAvgSqs(p1: NormalVector2D, p2: NormalVector2D): Double {
+        var sum = 0f
+        var count = 0
+        applyToPixelsOnLine(p1, p2) { inkIndex ->
+            sum= inputImageInk[inkIndex]
+            count++
+        }
+        return (sum/count).toDouble()
+    }
 
     /**
+     * Apply a function to each pixel that a line covers
      * Bresenham's algorithm to find all pixels on a Line2D. Assuming pixel grid is every unit.
      * @author nes
      * from https://snippets.siftie.com/nikoschwarz/iterate-all-points-on-a-line-using-bresenhams-algorithm/
-     * @return point plus lum of each pixel on the line
      */
-    private fun pixelsOnLine(p1: NormalVector2D, p2: NormalVector2D): List<Pair<NormalVector2D, Float>> {
+    private inline fun applyToPixelsOnLine(
+        p1: NormalVector2D,
+        p2: NormalVector2D,
+        applyToEachPoint:(inkIndex:Int)->Unit
+    ) {
         val precision = 1.0
         val x1 = p1.x * inputDimension
         val y1 = p1.y * inputDimension
@@ -59,13 +62,11 @@ private constructor(
 
         var x: Double = x1
         var y: Double = y1
+        var ix:Int
+        var iy:Int
         var error: Double = dx - dy
 
-        val result = mutableListOf<Pair<Double, Double>>()
-
         while (abs(x - x2) > 0.9 || abs(y - y2) > 0.9) {
-            val ret = Pair(x, y)
-
             val e2 = 2 * error
             if (e2 > -dy) {
                 error -= dy
@@ -75,17 +76,13 @@ private constructor(
                 error += dx
                 y += sy
             }
+            ix = x.toInt()
+            iy = y.toInt()
 
-            result.add(ret)
+            if(iy < inputDimension && ix < inputDimension) {
+                applyToEachPoint(iy * inputDimension + ix)
+            }
         }
-        return result
-            .mapNotNull { point ->
-                normalOrNull(point.first / inputDimension, point.second / inputDimension)
-            }
-            .map { nPoint ->
-                val ink = getInk(nPoint)
-                nPoint to ink
-            }
     }
 
     companion object {
